@@ -1,0 +1,30 @@
+{Con este ejemplo se quiere probar los diferentes tipos de comentarios y 
+ademas que reconozca tanto las palabras reservadas como los operadores}
+
+
+ABSOLUTE 	AND 	ARRAY 	ASM 	BEGIN 	CASE 
+CONST 	CONSTRUCTOR 	DESTRUCTOR	EXTERNAL 	DIV 	DO 
+DOWNTO 	ELSE 	END 	FILE 	FOR 	FORWARD 
+FUNCTION 	GOTO 	IF 	IMPLEMENTATION	IN 	INLINE 
+INTERFACE 	INTERRUPT 	LABEL 	MOD 	NIL 	NOT 
+OBJECT 	OF 	OR 	PACKED 	PRIVATE 	PROCEDURE 
+RECORD 	REPEAT 	SET 	SHL 	SHR 	STRING 
+THEN 	TO 	TYPE 	UNIT 	UNTIL 	USES 
+VAR 	VIRTUAL 	WHILE 	WITH 	XOR	
+
+
+{No hay errores en este archivo}
+
+
+
++	-	*	/	DIV	MOD
+NOT	AND	OR 	=	<>	<
+>	<=	>=	IN	,	;
+++	--	(	)	[	]
+:	.	^	**		
+
+
+
+
+(* POr ultimo este es el otro tipo de comentarios
+Tambien es de Boloque *)

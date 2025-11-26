@@ -1,0 +1,10 @@
+VAR valor, VALOR, VaLoR : INTEGER;  { case-insensitive }
+BEGIN
+  AND OR NOT DIV MOD IN SHL SHR
+  absolute array begin case const constructor destructor external do
+  downto else end file for forward function goto if implementation inline
+  interface interrupt label nil object of packed private procedure record
+  repeat set string then to type unit until uses var virtual while with xor
+  id1 := valor + VALOR - VaLoR;           { Identificador con mismo identificador }
+  badId := identificar!consimboloilegal;  { Identificador con símbolo ilegal embebido }
+END

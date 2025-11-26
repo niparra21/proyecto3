@@ -1,0 +1,9 @@
+BEGIN
+  rBad1 := .5;      { debe ser error: real con punto líder }
+  rBad2 := 5.;      { debe ser error: real con punto cola }
+  nx1 := 0xG1;      { debe ser error: HEX_INVALIDO}
+  no1 := 078;       { debe ser error: OCT_INVALIDO}
+  pegado1 := 123abc;      { número pegado a texto → error único }
+  pegado2 := 0x1FZ;       { número pegado a texto → error único }
+  pegado3 := 3.2e5foo;    { número pegado a texto → error único }
+END

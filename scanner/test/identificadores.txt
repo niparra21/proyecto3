@@ -1,0 +1,44 @@
+ x: int;  
+ 
+ 
+_ss REAL;  
+ 
+
+ 12zz:STRING;  {Aqui si hay un error porque no puede empezar con numeros } 
+
+
+
+$aa: CHAR;   {en este caso se espera que $ de un error lexico}
+
+
+
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+{este debe dar error porque es mas largo que 127 caracteres}
+
+
+
+
+
+caña, hola&, adios!, mult*   {deber dar errores porque son caracteres no validos}
+
+
+
+
+X: CHAR ;    { esta  X deberia salir junto con la primera porque no es case sensitive no es error, pero si hay que tener cuidado que lo ponga igual al primero.}
+
+
+
+{ERRORES DE SIMBOLOS NO CONOCIDOS}
+
+    
+  \@         
+
+  
+  Á 
+  INT árbol;    º 
+
+
+
+(* COMENTARIO NO CERRADO
+                DEBE DAR ERROR

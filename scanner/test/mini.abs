@@ -1,0 +1,7 @@
+PROGRAM P
+VAR x: INT; y: REAL;
+BEGIN
+  x := 5 + 3;
+  y := 0.5e+1 DIV 2;
+  IF x >= 7 THEN BEGIN WRITE(x); END
+END

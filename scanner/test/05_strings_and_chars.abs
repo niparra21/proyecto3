@@ -1,0 +1,11 @@
+BEGIN
+  s1 := "hola mundo";
+  c1 := 'Z';
+  s2 := "con "comillas" internas";
+  { Errores de cierre }
+  sErr1 := "sin cierre
+  cErr1 := 'X
+  { Casos límite extra }
+  s3 := "";
+  c2 := '9';
+END
