@@ -1,3 +1,5 @@
+package parser;
+
 import java_cup.runtime.*;
 
 
@@ -56,14 +58,14 @@ terminal String INT_LIT, REAL_LIT, CHAR_LIT, STRING_LIT;
 
 
 /* ===================== NO TERMINALES ===================== */
-non terminal program, globals_opt, decl_list, decl, type;
-non terminal funcs_opt, func_or_proc, function, procedure;
-non terminal main_block, stmt_list, stmt;
+non terminal program, globals_opt, decl_list, decl_tail, decl, type;
+non terminal funcs_opt, func_or_proc, function, procedure, invalid_top_stmt;
+non terminal main_block, stmt_list, stmt, stmt_core;
 non terminal assign, call_stmt, expr, bool_expr;
 non terminal param_list_opt, param_list, param;
 non terminal while_stmt, for_stmt;
 non terminal ident_list, arg_list_opt, arg_list;
-non terminal if_stmt;
+non terminal if_stmt, if_condition, then_block, else_block_opt;
 non terminal read_stmt, write_stmt;
 non terminal block;
 non terminal decl_section;
@@ -98,8 +100,10 @@ globals_opt ::=
     | VAR decl_list
 ;
 
-decl_list ::= decl
-            | decl_list decl
+decl_list ::= decl decl_tail;
+
+decl_tail ::= /* vacío */
+            | decl_tail decl
 ;
 
 decl ::= ident_list COLON type SEMI
@@ -138,9 +142,27 @@ type ::= INT
 
 
 /* ===================== FUNCIONES/PROCEDIMIENTOS ===================== */
-funcs_opt ::=
+funcs_opt ::= 
       /* vacío */
     | funcs_opt func_or_proc
+    | funcs_opt invalid_top_stmt
+      {:
+        java_cup.runtime.Symbol t = parser.cur_token;
+        report_error("Sentencia fuera de funcion/procedimiento; recuperado", t);
+      :}
+;
+
+invalid_top_stmt ::= assign SEMI
+                   | call_stmt SEMI
+                   | incdec_stmt SEMI
+                   | read_stmt SEMI
+                   | write_stmt SEMI
+                   | ret_stmt
+                   | error SEMI
+                     {:
+                       java_cup.runtime.Symbol t = parser.cur_token;
+                       report_error("Unidad invalida en zona de funciones; recuperado", t);
+                     :}
 ;
 
 func_or_proc ::= function
@@ -159,7 +181,22 @@ procedure ::= PROCEDURE IDENT LPAREN param_list_opt RPAREN
 
 
 /* ===================== MAIN ===================== */
-main_block ::= BEGIN block END;
+main_block ::= BEGIN block END
+            | BEGIN block error
+              {:
+                java_cup.runtime.Symbol t = parser.cur_token;
+                addSyn(t.left+1, t.right+1,
+                       "Falta END al finalizar el programa; recuperado en EOF",
+                       t.sym, "main_block");
+              :}
+            | BEGIN block
+              {:
+                java_cup.runtime.Symbol t = parser.cur_token;
+                addSyn(t.left+1, t.right+1,
+                       "Falta END al finalizar el programa; recuperado en EOF",
+                       t.sym, "main_block");
+              :}
+;
 
 
 /* ===================== BLOQUES ===================== */
@@ -189,23 +226,39 @@ decl_section ::=
 /* ===================== SENTENCIAS ===================== */
 stmt_list ::= stmt
             | stmt_list stmt
+            | stmt_list error SEMI
+              {:
+                java_cup.runtime.Symbol t = parser.cur_token;
+                report_error("Sentencia invalida; recuperado", t);
+              :}
 ;
 
-stmt ::=
-    assign SEMI
-  | call_stmt SEMI
-  | read_stmt SEMI
-  | write_stmt SEMI
+stmt ::= 
+    stmt_core SEMI
+  | stmt_core
+    {:
+      java_cup.runtime.Symbol lookahead = parser.cur_token;
+      java_cup.runtime.Symbol anchor = (java_cup.runtime.Symbol)CUP$Parser$stack.peek();
+      if (anchor != null && anchor.sym == sym.EOF) anchor = null; // Evita usar EOF del stack.
+
+      if (lookahead != null && lookahead.sym == sym.EOF && anchor == null) {
+        /* Evita reportar un ';' faltante justo en EOF para no duplicar el mensaje de END. */
+      } else {
+        java_cup.runtime.Symbol t = (anchor != null) ? anchor : lookahead;
+        report_error("Falta ';' al final de la sentencia; recuperado", t);
+      }
+    :}
   | if_stmt
   | while_stmt
   | for_stmt
-  | incdec_stmt SEMI
-  | error SEMI
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Sentencia invalida; recuperado", t);
-    :}
-  | ret_stmt
+;
+
+stmt_core ::= assign
+            | call_stmt
+            | read_stmt
+            | write_stmt
+            | incdec_stmt
+            | ret_stmt
 ;
 
 assign ::= IDENT ASSIGN expr;
@@ -310,49 +363,36 @@ bool_expr ::= NOT bool_expr
 
 
 /* ===================== CONTROL DE FLUJO ===================== */
-if_stmt ::=
-    IF bool_expr THEN BEGIN stmt_list END
-  | IF bool_expr THEN BEGIN stmt_list END ELSE BEGIN stmt_list END
+if_stmt ::= IF if_condition then_block else_block_opt;
 
-  | IF bool_expr BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; asumido", t);
-    :}
-  | IF bool_expr BEGIN stmt_list END ELSE BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; asumido", t);
-    :}
+if_condition ::= bool_expr
+               | error
+                 {:
+                   java_cup.runtime.Symbol t = parser.cur_token;
+                   report_error("Condicion invalida en IF; recuperado en THEN", t);
+                 :}
+;
 
-  | IF bool_expr error BEGIN stmt_list END
-     {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta THEN en IF; recuperado en BEGIN", t);
-    :}
-  | IF bool_expr THEN error stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta BEGIN tras THEN; recuperado en END", t);
-    :}
+then_block ::= THEN BEGIN stmt_list END
+             | error BEGIN stmt_list END
+               {:
+                 java_cup.runtime.Symbol t = parser.cur_token;
+                 report_error("Falta THEN en IF; recuperado en BEGIN", t);
+               :}
+             | THEN error stmt_list END
+               {:
+                 java_cup.runtime.Symbol t = parser.cur_token;
+                 report_error("Falta BEGIN tras THEN; recuperado en END", t);
+               :}
+;
 
-  | IF bool_expr THEN BEGIN stmt_list END error BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("ELSE invalido; recuperado en siguiente BEGIN", t);
-    :}
-
-  | IF error THEN BEGIN stmt_list END
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Condicion invalida en IF; recuperado en THEN", t);
-    :}
-
-  | IF error error
-    {:
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("IF invalido; recuperado saltando hasta siguiente sentencia", t);
-    :}
+else_block_opt ::= /* vacío */
+                 | ELSE BEGIN stmt_list END
+                 | ELSE error BEGIN stmt_list END
+                   {:
+                     java_cup.runtime.Symbol t = parser.cur_token;
+                     report_error("ELSE invalido; recuperado en siguiente BEGIN", t);
+                   :}
 ;
 
 while_stmt ::=
@@ -395,4 +435,4 @@ for_stmt ::=
 
 
 /* ===================== RETURN ===================== */
-ret_stmt ::= RETURN expr SEMI;
+ret_stmt ::= RETURN expr;
