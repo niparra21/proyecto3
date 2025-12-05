@@ -1228,8 +1228,16 @@ class CUP$Parser$actions {
             {
               Object RESULT =null;
 		
-      java_cup.runtime.Symbol t = parser.cur_token;
-      report_error("Falta ';' al final de la sentencia; recuperado", t);
+      java_cup.runtime.Symbol lookahead = parser.cur_token;
+      java_cup.runtime.Symbol anchor = (java_cup.runtime.Symbol)CUP$Parser$stack.peek();
+      if (anchor != null && anchor.sym == sym.EOF) anchor = null; // Evita usar EOF del stack.
+
+      if (lookahead != null && lookahead.sym == sym.EOF && anchor == null) {
+        /* Evita reportar un ';' faltante justo en EOF para no duplicar el mensaje de END. */
+      } else {
+        java_cup.runtime.Symbol t = (anchor != null) ? anchor : lookahead;
+        report_error("Falta ';' al final de la sentencia; recuperado", t);
+      }
     
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("stmt",13, ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
